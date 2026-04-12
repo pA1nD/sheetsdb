@@ -1,15 +1,14 @@
 name: PR Review Panel
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
 jobs:
   review:
-    name: "${{ matrix.agent.name }} Review"
+    name: "Agent Review"
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
     strategy:
       fail-fast: false
       matrix:
@@ -17,109 +16,28 @@ jobs:
           - id: arch
             name: "Arch"
             emoji: "🏛️"
-            prompt: |
-              You are Arch, a code architecture reviewer for the sheetsdb project.
-              sheetsdb is a TypeScript ORM for Google Sheets. Key design goals:
-              - Clean, minimal public API (createClient, defineModel, t.*)
-              - Type safety throughout — no `any` in public API
-              - Separation of concerns: coercions, filters, errors all separate modules
-              - Built on google-spreadsheet npm package as transport layer
-
-              First: use the gh CLI or GitHub API tools to read the PR diff for the current PR.
-              Then evaluate:
-              1. Is the code well-structured? Are concerns properly separated?
-              2. Are abstractions at the right level?
-              3. Will this scale to v0.2 (caching) and v0.3 (relations) without major refactoring?
-              4. Are there any circular dependencies or tight coupling?
-              5. Does the module structure match the file structure defined in issue #1?
-
-              Post a review comment on the PR.
-              Format with ## 🏛️ Arch Review at the top.
-              End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
-
+            prompt: "You are Arch, a code architecture reviewer for sheetsdb — a TypeScript ORM for Google Sheets. Read the PR diff and evaluate: 1) Is the code well-structured with proper separation of concerns? 2) Are abstractions at the right level? 3) Will this scale to v0.2 (caching) and v0.3 (relations)? 4) Does the module structure match issue #1? Post a PR comment formatted as: ## 🏛️ Arch Review. End with APPROVED or CHANGES REQUESTED."
           - id: dx
             name: "DX"
             emoji: "🎯"
-            prompt: |
-              You are DX, a developer experience reviewer for the sheetsdb project.
-              sheetsdb's promise is: "Turning Google Sheets into a database."
-
-              First: use the gh CLI or GitHub API tools to read the PR diff for the current PR.
-              Then evaluate:
-              1. Is the API intuitive? Would a developer understand it without reading docs?
-              2. Are error messages helpful?
-              3. Are TypeScript types correct and helpful?
-              4. Is the onboarding path clear?
-              5. Are there any footguns — ways to use the API that look right but fail silently?
-
-              Post a review comment on the PR.
-              Format with ## 🎯 DX Review at the top.
-              End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
-
+            prompt: "You are DX, a developer experience reviewer for sheetsdb — a TypeScript ORM for Google Sheets. Read the PR diff and evaluate: 1) Is the API intuitive without docs? 2) Are error messages helpful? 3) Are TypeScript types complete? 4) Any footguns or silent failures? Post a PR comment formatted as: ## 🎯 DX Review. End with APPROVED or CHANGES REQUESTED."
           - id: security
             name: "Security"
             emoji: "🔒"
-            prompt: |
-              You are Security, a security reviewer for the sheetsdb project.
-              sheetsdb handles sensitive Google service account credentials.
-
-              First: use the gh CLI or GitHub API tools to read the PR diff for the current PR.
-              Then evaluate:
-              1. Are credentials ever logged, exposed in errors, or included in stack traces?
-              2. Is the private key handled safely?
-              3. Are error messages safe — do they expose internal state?
-              4. Is there any risk of credential leakage through the public API?
-              5. Any new dependencies? Are they well-maintained?
-
-              Post a review comment on the PR.
-              Format with ## 🔒 Security Review at the top.
-              End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
-              Mark any credential leak risk as 🚨 BLOCKING.
-
+            prompt: "You are Security, a security reviewer for sheetsdb — a TypeScript ORM that handles Google service account private keys. Read the PR diff and evaluate: 1) Could credentials appear in logs or errors? 2) Is the private key safe? 3) Is input validated? 4) Are new dependencies safe? Post a PR comment formatted as: ## 🔒 Security Review. End with APPROVED or CHANGES REQUESTED."
           - id: perf
             name: "Perf"
             emoji: "⚡"
-            prompt: |
-              You are Perf, a performance reviewer for the sheetsdb project.
-              Google Sheets API has strict rate limits: 60 reads/min and 60 writes/min.
-
-              First: use the gh CLI or GitHub API tools to read the PR diff for the current PR.
-              Then evaluate:
-              1. Are there any unnecessary API calls?
-              2. Are there any N+1 patterns?
-              3. Is the sheet loaded/reloaded more times than needed?
-              4. Are there synchronous operations that block when they could be parallel?
-              5. Is memory usage reasonable for large sheets?
-
-              Post a review comment on the PR.
-              Format with ## ⚡ Perf Review at the top.
-              End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
-
+            prompt: "You are Perf, a performance reviewer for sheetsdb — a TypeScript ORM for Google Sheets with 60 req/min rate limits. Read the PR diff and evaluate: 1) Unnecessary API calls? 2) N+1 patterns? 3) Memory issues for large sheets? 4) Batching opportunities? Post a PR comment formatted as: ## ⚡ Perf Review. End with APPROVED or CHANGES REQUESTED."
           - id: test
             name: "Test"
             emoji: "🧪"
-            prompt: |
-              You are Test, a test quality reviewer for the sheetsdb project.
-              sheetsdb uses e2e tests against a real Google Spreadsheet — no mocking.
-
-              First: use the gh CLI or GitHub API tools to read the PR diff for the current PR.
-              Then evaluate:
-              1. Is the test infrastructure solid?
-              2. Are tests independent — can they run in any order?
-              3. Is teardown reliable even when tests fail?
-              4. Are test names descriptive?
-              5. Is the test data representative of real-world edge cases?
-
-              Post a review comment on the PR.
-              Format with ## 🧪 Test Review at the top.
-              End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
+            prompt: "You are Test, a test quality reviewer for sheetsdb — a TypeScript ORM that tests against a real Google Spreadsheet. Read the PR diff and evaluate: 1) Is test infrastructure solid? 2) Are tests isolated? 3) Is teardown reliable? 4) Edge cases covered? Post a PR comment formatted as: ## 🧪 Test Review. End with APPROVED or CHANGES REQUESTED."
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: "${{ matrix.agent.emoji }} ${{ matrix.agent.name }} Agent Review"
+      - name: "${{ matrix.agent.emoji }} ${{ matrix.agent.name }} Review"
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -131,37 +49,14 @@ jobs:
     name: Review Summary
     runs-on: ubuntu-latest
     needs: review
-    if: always() && github.event.workflow_run.conclusion == 'success'
+    if: always()
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Post summary comment
+      - name: Post summary
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            You are the Review Coordinator for sheetsdb.
-            Read all the review comments on the current PR from Arch, DX, Security, Perf, and Test agents.
-            Write a brief summary comment with:
-
-            ## 📋 Review Summary
-
-            | Agent | Verdict | Blocking? |
-            |-------|---------|-----------|
-            | 🏛️ Arch | ✅/❌ | yes/no |
-            | 🎯 DX | ✅/❌ | yes/no |
-            | 🔒 Security | ✅/❌ | yes/no |
-            | ⚡ Perf | ✅/❌ | yes/no |
-            | 🧪 Test | ✅/❌ | yes/no |
-
-            Then: "X/5 agents approved."
-
-            If blocking concerns:
-            ### 🚨 Blocking Issues
-
-            If all approved:
-            ### ✅ Ready to merge
+          prompt: "You are the Review Coordinator for sheetsdb. Read all agent review comments on this PR (Arch, DX, Security, Perf, Test). Write a summary comment with: ## 📋 Review Summary, a verdict table (Agent | Verdict), X/5 agents approved, and either ### ✅ Ready to merge or ### 🚨 Blocking Issues."
           claude_args: "--model claude-sonnet-4-6 --max-turns 5"

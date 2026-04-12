@@ -1,7 +1,6 @@
 name: PR Review Panel
 
 on:
-  workflow_dispatch:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
@@ -13,103 +12,75 @@ permissions:
 
 jobs:
   arch:
-    name: "🏛️ Arch Review"
+    name: "Arch Review"
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            You are Arch, a code architecture reviewer for sheetsdb — a TypeScript ORM for Google Sheets.
-            Review this PR's code architecture. Evaluate: separation of concerns, abstraction levels,
-            scalability toward v0.2 (caching) and v0.3 (relations), and module structure vs issue #1 spec.
-            Post a comment on this PR starting with ## 🏛️ Arch Review.
-            End with ✅ Approved or ❌ Changes Requested and one sentence why.
+          prompt: "You are Arch, a code architecture reviewer for sheetsdb (TypeScript ORM for Google Sheets). Review this PR for architecture quality: separation of concerns, abstraction levels, scalability toward v0.2 caching and v0.3 relations, module structure vs issue #1. Post a comment starting with ## Arch Review. End with APPROVED or CHANGES REQUESTED."
           claude_args: "--max-turns 10 --model claude-sonnet-4-6"
 
   dx:
-    name: "🎯 DX Review"
+    name: "DX Review"
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            You are DX, a developer experience reviewer for sheetsdb — a TypeScript ORM for Google Sheets.
-            Review this PR's developer experience. Evaluate: API intuitiveness, error message quality,
-            TypeScript type completeness, onboarding clarity, and any footguns or silent failures.
-            Post a comment on this PR starting with ## 🎯 DX Review.
-            End with ✅ Approved or ❌ Changes Requested and one sentence why.
+          prompt: "You are DX, a developer experience reviewer for sheetsdb (TypeScript ORM for Google Sheets). Review this PR for DX: API intuitiveness, error message quality, TypeScript type completeness, onboarding clarity, footguns. Post a comment starting with ## DX Review. End with APPROVED or CHANGES REQUESTED."
           claude_args: "--max-turns 10 --model claude-sonnet-4-6"
 
   security:
-    name: "🔒 Security Review"
+    name: "Security Review"
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            You are Security, a security reviewer for sheetsdb — a TypeScript ORM handling Google service account private keys.
-            Review this PR for security issues. Evaluate: credential exposure in logs/errors,
-            private key handling safety, input validation, and new dependency safety.
-            Post a comment on this PR starting with ## 🔒 Security Review.
-            Mark any credential leak as 🚨 BLOCKING.
-            End with ✅ Approved or ❌ Changes Requested and one sentence why.
+          prompt: "You are Security, a security reviewer for sheetsdb which handles Google service account private keys. Review this PR: credential exposure in logs, private key safety, input validation, new dependency safety. Post a comment starting with ## Security Review. Mark credential leaks as BLOCKING. End with APPROVED or CHANGES REQUESTED."
           claude_args: "--max-turns 10 --model claude-sonnet-4-6"
 
   perf:
-    name: "⚡ Perf Review"
+    name: "Perf Review"
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            You are Perf, a performance reviewer for sheetsdb — a TypeScript ORM for Google Sheets with 60 req/min rate limits.
-            Review this PR for performance issues. Evaluate: unnecessary API calls, N+1 patterns,
-            unnecessary sheet reloads, blocking operations, and memory usage for large sheets.
-            Post a comment on this PR starting with ## ⚡ Perf Review.
-            End with ✅ Approved or ❌ Changes Requested and one sentence why.
+          prompt: "You are Perf, a performance reviewer for sheetsdb (TypeScript ORM, 60 req/min Google Sheets rate limits). Review this PR: unnecessary API calls, N+1 patterns, unnecessary reloads, blocking operations, memory for large sheets. Post a comment starting with ## Perf Review. End with APPROVED or CHANGES REQUESTED."
           claude_args: "--max-turns 10 --model claude-sonnet-4-6"
 
   test:
-    name: "🧪 Test Review"
+    name: "Test Review"
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            You are Test, a test quality reviewer for sheetsdb — a TypeScript ORM tested against a real Google Spreadsheet.
-            Review this PR's test quality. Evaluate: test infrastructure solidity, test isolation,
-            teardown reliability on failure, test name descriptiveness, and edge case coverage.
-            Post a comment on this PR starting with ## 🧪 Test Review.
-            End with ✅ Approved or ❌ Changes Requested and one sentence why.
+          prompt: "You are Test, a test quality reviewer for sheetsdb (TypeScript ORM tested against a real Google Spreadsheet). Review this PR: test infrastructure, isolation, teardown reliability, test name clarity, edge case coverage. Post a comment starting with ## Test Review. End with APPROVED or CHANGES REQUESTED."
           claude_args: "--max-turns 10 --model claude-sonnet-4-6"
 
   summary:
-    name: "📋 Review Summary"
+    name: "Review Summary"
     runs-on: ubuntu-latest
     needs: [arch, dx, security, perf, test]
     if: always()
     steps:
+      - uses: actions/checkout@v4
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            You are the Review Coordinator for sheetsdb.
-            Read all review comments on this PR from Arch, DX, Security, Perf, and Test agents.
-            Write a final summary comment with:
-            ## 📋 Review Summary
-            A table: | Agent | Verdict | Blocking? |
-            Then: X/5 agents approved.
-            If blocking issues: ### 🚨 Blocking Issues (list them)
-            If all clear: ### ✅ Ready to merge
+          prompt: "You are the Review Coordinator for sheetsdb. Read all agent review comments on this PR (Arch, DX, Security, Perf, Test). Write a summary comment: ## Review Summary, a verdict table (Agent | Verdict | Blocking), X/5 agents approved, then either Ready to merge or list of Blocking Issues."
           claude_args: "--max-turns 5 --model claude-sonnet-4-6"

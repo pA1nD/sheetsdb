@@ -264,8 +264,8 @@ npm test
 
 Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before submitting a PR.
 
----
+--- 
 
-## License
+## License 
 
-MIT © Björn Schmidtke
+MIT © Björn Schmidtke 

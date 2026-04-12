@@ -7,9 +7,21 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
+    "test": "jest --passWithNoTests",
+    "test:e2e": "jest --testPathPattern=tests/e2e --passWithNoTests",
     "lint": "eslint 'src/**/*.ts'",
-    "test:e2e": "jest --testPathPattern=tests/e2e --passWithNoTests"
+    "test:cleanup": "ts-node tests/teardown.ts"
   },
+  "keywords": [
+    "google-sheets",
+    "orm",
+    "database",
+    "typescript"
+  ],
+  "author": "Bj\u00f6rn Schmidtke",
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "google-spreadsheet": "^4.1.0",
     "google-auth-library": "^9.0.0",
@@ -21,9 +33,12 @@
     "ts-jest": "^29.0.0",
     "@types/jest": "^29.0.0",
     "@types/node": "^20.0.0",
+    "@types/uuid": "^10.0.0",
     "eslint": "^8.0.0",
     "@typescript-eslint/parser": "^7.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0"
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "ts-node": "^10.0.0",
+    "dotenv": "^16.0.0"
   },
   "engines": {
     "node": ">=20.0.0"

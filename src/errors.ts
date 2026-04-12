@@ -2,10 +2,17 @@
  * Custom error types for sheetsdb.
  */
 
-export class SheetsdbError extends Error {
-  readonly code: string;
+export type SheetsdbErrorCode =
+  | 'AUTH_ERROR'
+  | 'NOT_FOUND'
+  | 'VALIDATION_ERROR'
+  | 'RATE_LIMIT'
+  | 'CONNECTION_ERROR';
 
-  constructor(message: string, code: string) {
+export class SheetsdbError extends Error {
+  readonly code: SheetsdbErrorCode;
+
+  constructor(message: string, code: SheetsdbErrorCode) {
     super(message);
     this.name = 'SheetsdbError';
     this.code = code;

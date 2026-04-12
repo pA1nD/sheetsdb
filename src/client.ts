@@ -5,7 +5,7 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { ClientConfig } from './types';
-import { SheetsdbAuthError, SheetsdbNotFoundError } from './errors';
+import { SheetsdbAuthError, SheetsdbNotFoundError, SheetsdbRateLimitError, SheetsdbError } from './errors';
 
 export interface SheetsdbClient {
   /** The underlying google-spreadsheet instance. */
@@ -41,8 +41,22 @@ export async function createClient(config: ClientConfig): Promise<SheetsdbClient
     if (status === 404) {
       throw new SheetsdbNotFoundError(`Spreadsheet not found: ${spreadsheetId}`);
     }
+    if (status === 403) {
+      throw new SheetsdbAuthError(
+        `Access denied: share the spreadsheet with ${auth.clientEmail}`
+      );
+    }
+    if (status === 429) {
+      throw new SheetsdbRateLimitError('Google Sheets API rate limit exceeded');
+    }
 
-    // 401, 403, or any other error means credentials/access problem
+    // No HTTP status → network-level error (DNS, timeout, ECONNREFUSED)
+    if (status === undefined) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new SheetsdbError(`Connection failed: ${message}`, 'CONNECTION_ERROR');
+    }
+
+    // 401 or any other HTTP error → bad credentials
     throw new SheetsdbAuthError('Invalid credentials');
   }
 

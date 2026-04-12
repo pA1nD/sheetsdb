@@ -45,10 +45,10 @@ export type Filter<S extends Schema> = {
 };
 
 /** Options for findMany queries. */
-export interface FindManyOptions {
+export interface FindManyOptions<S extends Schema = Schema> {
   limit?: number;
   offset?: number;
-  sortBy?: string;
+  sortBy?: keyof S & string;
   sortOrder?: 'asc' | 'desc';
 }
 

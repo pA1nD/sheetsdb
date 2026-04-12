@@ -14,7 +14,7 @@ const ID_COLUMN = '_id';
 
 export interface Model<S extends Schema> {
   /** Find all rows matching an optional filter. */
-  findMany(filter?: Filter<S>, options?: FindManyOptions): Promise<InferRow<S>[]>;
+  findMany(filter?: Filter<S>, options?: FindManyOptions<S>): Promise<InferRow<S>[]>;
   /** Find the first row matching a filter, or null. */
   findOne(filter: Filter<S>): Promise<InferRow<S> | null>;
   /** Create a new row and return it with its generated _id. */
@@ -89,7 +89,7 @@ export function defineModel<S extends Schema>(
   const schemaKeys = Object.keys(schema);
 
   return {
-    async findMany(filter?: Filter<S>, options?: FindManyOptions): Promise<InferRow<S>[]> {
+    async findMany(filter?: Filter<S>, options?: FindManyOptions<S>): Promise<InferRow<S>[]> {
       const sheet = await getSheet();
       await ensureIdColumn(sheet);
       const rows = await loadRows(sheet);
@@ -160,7 +160,7 @@ export function defineModel<S extends Schema>(
     async update(filter: Filter<S>, data: Partial<Record<string, unknown>>): Promise<number> {
       const sheet = await getSheet();
       await ensureIdColumn(sheet);
-      const rows = await sheet.getRows();
+      const rows = await loadRows(sheet);
 
       let count = 0;
       for (const row of rows) {
@@ -183,7 +183,7 @@ export function defineModel<S extends Schema>(
     async delete(filter: Filter<S>): Promise<number> {
       const sheet = await getSheet();
       await ensureIdColumn(sheet);
-      const rows = await sheet.getRows();
+      const rows = await loadRows(sheet);
 
       // Collect indices to delete (bottom-up to avoid index shifting)
       const toDelete: number[] = [];

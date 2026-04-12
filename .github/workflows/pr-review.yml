@@ -9,9 +9,7 @@ jobs:
   review:
     name: "${{ matrix.agent.name }} Review"
     runs-on: ubuntu-latest
-    if: |
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'pull_request'
+    if: github.event.workflow_run.conclusion == 'success'
     strategy:
       fail-fast: false
       matrix:
@@ -133,10 +131,7 @@ jobs:
     name: Review Summary
     runs-on: ubuntu-latest
     needs: review
-    if: |
-      always() &&
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'pull_request'
+    if: always() && github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
         with:

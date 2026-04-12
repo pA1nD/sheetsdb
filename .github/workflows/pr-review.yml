@@ -26,10 +26,10 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            You are Arch, a code architecture reviewer for sheetsdb — a TypeScript ORM for Google Sheets.
+            You are Arch, a code architecture reviewer for sheetsdb (TypeScript ORM for Google Sheets).
             Review this PR for: separation of concerns, abstraction levels, scalability toward v0.2/v0.3, module structure vs issue #1.
             Post your review as a PR comment starting with ## Arch Review.
-            End with APPROVED or CHANGES REQUESTED and one sentence why.
+            End with APPROVED or CHANGES REQUESTED.
           claude_args: |
             --max-turns 10
             --model claude-sonnet-4-6
@@ -49,10 +49,10 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            You are DX, a developer experience reviewer for sheetsdb — a TypeScript ORM for Google Sheets.
+            You are DX, a developer experience reviewer for sheetsdb (TypeScript ORM for Google Sheets).
             Review this PR for: API intuitiveness, error message quality, TypeScript type completeness, footguns.
             Post your review as a PR comment starting with ## DX Review.
-            End with APPROVED or CHANGES REQUESTED and one sentence why.
+            End with APPROVED or CHANGES REQUESTED.
           claude_args: |
             --max-turns 10
             --model claude-sonnet-4-6
@@ -72,11 +72,10 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            You are Security, a security reviewer for sheetsdb — handles Google service account private keys.
+            You are Security, a security reviewer for sheetsdb (handles Google service account private keys).
             Review this PR for: credential exposure, private key safety, input validation, dependency safety.
-            Post your review as a PR comment starting with ## Security Review.
-            Mark any credential leak BLOCKING.
-            End with APPROVED or CHANGES REQUESTED and one sentence why.
+            Post your review as a PR comment starting with ## Security Review. Mark credential leaks BLOCKING.
+            End with APPROVED or CHANGES REQUESTED.
           claude_args: |
             --max-turns 10
             --model claude-sonnet-4-6
@@ -96,10 +95,10 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            You are Perf, a performance reviewer for sheetsdb — TypeScript ORM with 60 req/min Google Sheets limits.
+            You are Perf, a performance reviewer for sheetsdb (TypeScript ORM, 60 req/min Google Sheets limits).
             Review this PR for: unnecessary API calls, N+1 patterns, unnecessary reloads, memory usage.
             Post your review as a PR comment starting with ## Perf Review.
-            End with APPROVED or CHANGES REQUESTED and one sentence why.
+            End with APPROVED or CHANGES REQUESTED.
           claude_args: |
             --max-turns 10
             --model claude-sonnet-4-6
@@ -119,10 +118,10 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            You are Test, a test quality reviewer for sheetsdb — tests run against real Google Spreadsheet.
+            You are Test, a test quality reviewer for sheetsdb (tests run against real Google Spreadsheet).
             Review this PR for: test infrastructure, isolation, teardown reliability, edge case coverage.
             Post your review as a PR comment starting with ## Test Review.
-            End with APPROVED or CHANGES REQUESTED and one sentence why.
+            End with APPROVED or CHANGES REQUESTED.
           claude_args: |
             --max-turns 10
             --model claude-sonnet-4-6
@@ -145,18 +144,11 @@ jobs:
             PR NUMBER: ${{ github.event.pull_request.number }}
 
             You are the Review Coordinator for sheetsdb.
-            Read all agent review comments on this PR, then post a summary comment with:
+            Read all review comments on this PR, then post a summary comment with:
             ## Review Summary
             | Agent | Verdict | Blocking? |
             |-------|---------|-----------|
-            | Arch | ... | ... |
-            | DX | ... | ... |
-            | Security | ... | ... |
-            | Perf | ... | ... |
-            | Test | ... | ... |
-
-            Then: X/5 agents approved.
-            Either ### Ready to merge or ### Blocking Issues (list them).
+            Then: X/5 agents approved. Either Ready to merge or list Blocking Issues.
           claude_args: |
             --max-turns 5
             --model claude-sonnet-4-6

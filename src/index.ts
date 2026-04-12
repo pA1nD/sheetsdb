@@ -32,4 +32,5 @@ export {
   SheetsdbValidationError,
   SheetsdbRateLimitError,
 } from './errors';
+export type { SheetsdbErrorCode } from './errors';
 

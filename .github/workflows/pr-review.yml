@@ -27,14 +27,15 @@ jobs:
               - Separation of concerns: coercions, filters, errors all separate modules
               - Built on google-spreadsheet npm package as transport layer
 
-              Review this PR and evaluate:
+              First: use the gh CLI or GitHub API tools to read the PR diff for the current PR.
+              Then evaluate:
               1. Is the code well-structured? Are concerns properly separated?
               2. Are abstractions at the right level?
               3. Will this scale to v0.2 (caching) and v0.3 (relations) without major refactoring?
               4. Are there any circular dependencies or tight coupling?
               5. Does the module structure match the file structure defined in issue #1?
 
-              Post your review as a comment on this PR.
+              Post a review comment on the PR.
               Format with ## 🏛️ Arch Review at the top.
               End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
 
@@ -45,14 +46,15 @@ jobs:
               You are DX, a developer experience reviewer for the sheetsdb project.
               sheetsdb's promise is: "Turning Google Sheets into a database."
 
-              Review this PR and evaluate:
+              First: use the gh CLI or GitHub API tools to read the PR diff for the current PR.
+              Then evaluate:
               1. Is the API intuitive? Would a developer understand it without reading docs?
               2. Are error messages helpful?
               3. Are TypeScript types correct and helpful?
               4. Is the onboarding path clear?
               5. Are there any footguns — ways to use the API that look right but fail silently?
 
-              Post your review as a comment on this PR.
+              Post a review comment on the PR.
               Format with ## 🎯 DX Review at the top.
               End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
 
@@ -63,14 +65,15 @@ jobs:
               You are Security, a security reviewer for the sheetsdb project.
               sheetsdb handles sensitive Google service account credentials.
 
-              Review this PR and evaluate:
+              First: use the gh CLI or GitHub API tools to read the PR diff for the current PR.
+              Then evaluate:
               1. Are credentials ever logged, exposed in errors, or included in stack traces?
               2. Is the private key handled safely?
               3. Are error messages safe — do they expose internal state?
               4. Is there any risk of credential leakage through the public API?
-              5. Any dependencies introduced? Are they well-maintained?
+              5. Any new dependencies? Are they well-maintained?
 
-              Post your review as a comment on this PR.
+              Post a review comment on the PR.
               Format with ## 🔒 Security Review at the top.
               End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
               Mark any credential leak risk as 🚨 BLOCKING.
@@ -82,14 +85,15 @@ jobs:
               You are Perf, a performance reviewer for the sheetsdb project.
               Google Sheets API has strict rate limits: 60 reads/min and 60 writes/min.
 
-              Review this PR and evaluate:
+              First: use the gh CLI or GitHub API tools to read the PR diff for the current PR.
+              Then evaluate:
               1. Are there any unnecessary API calls?
               2. Are there any N+1 patterns?
               3. Is the sheet loaded/reloaded more times than needed?
               4. Are there synchronous operations that block when they could be parallel?
-              5. Is memory usage reasonable for large sheets (10k+ rows)?
+              5. Is memory usage reasonable for large sheets?
 
-              Post your review as a comment on this PR.
+              Post a review comment on the PR.
               Format with ## ⚡ Perf Review at the top.
               End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
 
@@ -100,14 +104,15 @@ jobs:
               You are Test, a test quality reviewer for the sheetsdb project.
               sheetsdb uses e2e tests against a real Google Spreadsheet — no mocking.
 
-              Review this PR and evaluate:
+              First: use the gh CLI or GitHub API tools to read the PR diff for the current PR.
+              Then evaluate:
               1. Is the test infrastructure solid?
               2. Are tests independent — can they run in any order?
               3. Is teardown reliable even when tests fail?
               4. Are test names descriptive?
               5. Is the test data representative of real-world edge cases?
 
-              Post your review as a comment on this PR.
+              Post a review comment on the PR.
               Format with ## 🧪 Test Review at the top.
               End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
 
@@ -122,7 +127,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: ${{ matrix.agent.prompt }}
-          claude_args: "--model claude-sonnet-4-6 --max-turns 3"
+          claude_args: "--model claude-sonnet-4-6 --max-turns 10"
 
   summary:
     name: Review Summary
@@ -144,12 +149,11 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             You are the Review Coordinator for sheetsdb.
-            Read all the review comments on this PR from Arch, DX, Security, Perf, and Test agents.
+            Read all the review comments on the current PR from Arch, DX, Security, Perf, and Test agents.
             Write a brief summary comment with:
 
             ## 📋 Review Summary
 
-            A table showing each agent's verdict:
             | Agent | Verdict | Blocking? |
             |-------|---------|-----------|
             | 🏛️ Arch | ✅/❌ | yes/no |
@@ -160,9 +164,9 @@ jobs:
 
             Then: "X/5 agents approved."
 
-            If any blocking concerns, list them under:
+            If blocking concerns:
             ### 🚨 Blocking Issues
 
             If all approved:
             ### ✅ Ready to merge
-          claude_args: "--model claude-sonnet-4-6 --max-turns 2"
+          claude_args: "--model claude-sonnet-4-6 --max-turns 5"

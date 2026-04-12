@@ -104,12 +104,6 @@ SHEETSDB_TEST_PRIVATE_KEY=...
 SHEETSDB_TEST_SPREADSHEET_ID=...
 ```
 
-## Issue dependencies (build in this order)
-
-```
-#1 scaffold → #12 errors → #2 client → #4 types → #3 model → #11 filters → #5-10 CRUD → #13 test bench → #14 e2e suite
-```
-
 ## Current milestone: v0.1
 
 See ROADMAP.md for full spec. See GitHub Issues for individual task breakdowns.

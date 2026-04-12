@@ -34,7 +34,8 @@ jobs:
               4. Are there any circular dependencies or tight coupling?
               5. Does the module structure match the file structure defined in issue #1?
 
-              Format your comment with ## 🏛️ Arch Review at the top.
+              Post your review as a comment on this PR.
+              Format with ## 🏛️ Arch Review at the top.
               End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
 
           - id: dx
@@ -51,7 +52,8 @@ jobs:
               4. Is the onboarding path clear?
               5. Are there any footguns — ways to use the API that look right but fail silently?
 
-              Format your comment with ## 🎯 DX Review at the top.
+              Post your review as a comment on this PR.
+              Format with ## 🎯 DX Review at the top.
               End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
 
           - id: security
@@ -68,7 +70,8 @@ jobs:
               4. Is there any risk of credential leakage through the public API?
               5. Any dependencies introduced? Are they well-maintained?
 
-              Format your comment with ## 🔒 Security Review at the top.
+              Post your review as a comment on this PR.
+              Format with ## 🔒 Security Review at the top.
               End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
               Mark any credential leak risk as 🚨 BLOCKING.
 
@@ -86,7 +89,8 @@ jobs:
               4. Are there synchronous operations that block when they could be parallel?
               5. Is memory usage reasonable for large sheets (10k+ rows)?
 
-              Format your comment with ## ⚡ Perf Review at the top.
+              Post your review as a comment on this PR.
+              Format with ## ⚡ Perf Review at the top.
               End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
 
           - id: test
@@ -103,29 +107,20 @@ jobs:
               4. Are test names descriptive?
               5. Is the test data representative of real-world edge cases?
 
-              Format your comment with ## 🧪 Test Review at the top.
+              Post your review as a comment on this PR.
+              Format with ## 🧪 Test Review at the top.
               End with either ✅ **Approved** or ❌ **Changes Requested** and one sentence why.
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Get PR number
-        id: pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
-        run: |
-          PR=$(gh pr list --repo ${{ github.repository }} --head "$HEAD_BRANCH" --state open --json number --jq '.[0].number // empty')
-          echo "number=$PR" >> $GITHUB_OUTPUT
-          echo "Found PR: $PR"
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: "${{ matrix.agent.emoji }} ${{ matrix.agent.name }} Agent Review"
-        if: steps.pr.outputs.number != ''
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          pr_number: ${{ steps.pr.outputs.number }}
           prompt: ${{ matrix.agent.prompt }}
           claude_args: "--model claude-sonnet-4-6 --max-turns 3"
 
@@ -139,23 +134,14 @@ jobs:
       github.event.workflow_run.event == 'pull_request'
     steps:
       - uses: actions/checkout@v4
-
-      - name: Get PR number
-        id: pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
-        run: |
-          PR=$(gh pr list --repo ${{ github.repository }} --head "$HEAD_BRANCH" --state open --json number --jq '.[0].number // empty')
-          echo "number=$PR" >> $GITHUB_OUTPUT
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Post summary comment
-        if: steps.pr.outputs.number != ''
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          pr_number: ${{ steps.pr.outputs.number }}
           prompt: |
             You are the Review Coordinator for sheetsdb.
             Read all the review comments on this PR from Arch, DX, Security, Perf, and Test agents.

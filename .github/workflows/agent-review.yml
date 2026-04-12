@@ -12,8 +12,109 @@ permissions:
   id-token: write
 
 jobs:
+  get-context:
+    name: "Build Milestone Context"
+    runs-on: ubuntu-latest
+    outputs:
+      milestone_context: ${{ steps.context.outputs.milestone_context }}
+    steps:
+      - name: Build milestone context
+        id: context
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          REPO="${{ github.repository }}"
+
+          # Get PR body and extract linked issue number (Closes #N / Fixes #N / Resolves #N)
+          PR_BODY=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json body -q .body)
+          ISSUE_NUM=$(echo "$PR_BODY" | grep -oiE '(closes|fixes|resolves)\s+#[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
+
+          if [ -z "$ISSUE_NUM" ]; then
+            {
+              echo "milestone_context<<CTXDELIM"
+              echo "## Milestone Context"
+              echo ""
+              echo "WARNING: No linked issue found in PR body."
+              echo "Every PR must contain 'Closes #N' to link to its implementation issue."
+              echo "Without this, reviewers lack milestone context and may flag intentionally deferred work as missing."
+              echo "CTXDELIM"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Find the milestone label (v0.1, v0.2, etc.) on the linked issue
+          MILESTONE=$(gh issue view "$ISSUE_NUM" --repo "$REPO" --json labels \
+            -q '[.labels[].name | select(startswith("v"))][0] // empty' || true)
+
+          if [ -z "$MILESTONE" ]; then
+            CURRENT_TITLE=$(gh issue view "$ISSUE_NUM" --repo "$REPO" --json title -q .title)
+            {
+              echo "milestone_context<<CTXDELIM"
+              echo "## Milestone Context"
+              echo ""
+              echo "This PR implements issue #${ISSUE_NUM} (${CURRENT_TITLE})."
+              echo "No milestone label (v*) found on the issue — cannot build full milestone progress tree."
+              echo "CTXDELIM"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Fetch the current issue title
+          CURRENT_TITLE=$(gh issue view "$ISSUE_NUM" --repo "$REPO" --json title -q .title)
+
+          # Fetch all issues in this milestone (open + closed), sorted ascending by number
+          ISSUES_JSON=$(gh issue list --repo "$REPO" --label "$MILESTONE" --state all \
+            --json number,title,body,state --limit 100 | jq 'sort_by(.number)')
+
+          # Build progress tree: each issue gets a status indicator and a one-line scope summary
+          PROGRESS=$(echo "$ISSUES_JSON" | jq -r --arg cur "$ISSUE_NUM" '.[] |
+            # Extract first meaningful line from body as scope summary
+            ((.body // "") | split("\n") | map(select(
+              length > 0 and
+              (startswith("#") | not) and
+              (startswith("```") | not) and
+              (startswith("- ") | not) and
+              (startswith("| ") | not) and
+              (startswith("  ") | not)
+            )) | .[0] // "No description" | .[0:150]) as $scope |
+            if .number == ($cur | tonumber) then
+              "-> #\(.number) — \(.title) <-- THIS PR\n   \($scope)"
+            elif .state == "CLOSED" then
+              "[x] #\(.number) — \(.title) [DONE]\n   \($scope)"
+            else
+              "[ ] #\(.number) — \(.title) [PENDING]\n   \($scope)"
+            end
+          ')
+
+          # Count done / total for a quick summary line
+          DONE_COUNT=$(echo "$ISSUES_JSON" | jq '[.[] | select(.state == "CLOSED")] | length')
+          TOTAL_COUNT=$(echo "$ISSUES_JSON" | jq 'length')
+
+          # Write the full context block to job output
+          {
+            echo "milestone_context<<CTXDELIM"
+            echo "## Milestone Context: ${MILESTONE}"
+            echo ""
+            echo "This PR implements issue #${ISSUE_NUM} (${CURRENT_TITLE})."
+            echo "Milestone progress: ${DONE_COUNT}/${TOTAL_COUNT} issues completed."
+            echo ""
+            echo "### Milestone Progress"
+            echo "${PROGRESS}"
+            echo ""
+            echo "### Reviewer Instructions"
+            echo "- [DONE] = already merged and working. You can assume this functionality exists."
+            echo "- THIS PR = the scope of this PR. Review ONLY against this issue's requirements."
+            echo "- [PENDING] = intentionally deferred to a future PR. Do NOT flag missing functionality from pending issues."
+            echo "- Stubs, TODOs, or incomplete code paths for [PENDING] issues are expected and correct."
+            echo "CTXDELIM"
+          } >> "$GITHUB_OUTPUT"
+
   arch:
     name: "Arch Review"
+    needs: [get-context]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +125,8 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           prompt: |
+            ${{ needs.get-context.outputs.milestone_context }}
+
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
@@ -36,6 +139,7 @@ jobs:
 
   dx:
     name: "DX Review"
+    needs: [get-context]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +150,8 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           prompt: |
+            ${{ needs.get-context.outputs.milestone_context }}
+
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
@@ -58,6 +164,7 @@ jobs:
 
   security:
     name: "Security Review"
+    needs: [get-context]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -68,6 +175,8 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           prompt: |
+            ${{ needs.get-context.outputs.milestone_context }}
+
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
@@ -81,6 +190,7 @@ jobs:
 
   perf:
     name: "Perf Review"
+    needs: [get-context]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -91,6 +201,8 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           prompt: |
+            ${{ needs.get-context.outputs.milestone_context }}
+
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
@@ -103,6 +215,7 @@ jobs:
 
   test:
     name: "Test Review"
+    needs: [get-context]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -113,6 +226,8 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           prompt: |
+            ${{ needs.get-context.outputs.milestone_context }}
+
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 

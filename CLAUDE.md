@@ -79,6 +79,13 @@ docs: update README with filter operator examples
 chore: add ESLint rule for no-explicit-any
 ```
 
+## PR conventions
+
+Every PR body **must** contain `Closes #N` (or `Fixes #N` / `Resolves #N`) linking to the GitHub issue it implements. This is required because:
+
+- The CI review agents use this to build milestone context — they need to know which issue the PR covers so they don't flag intentionally deferred work as missing
+- GitHub auto-closes the linked issue when the PR merges
+
 ## Running things locally
 
 ```bash
@@ -95,12 +102,6 @@ npm run test:cleanup      # delete leftover test_* sheet tabs
 SHEETSDB_TEST_CLIENT_EMAIL=...
 SHEETSDB_TEST_PRIVATE_KEY=...
 SHEETSDB_TEST_SPREADSHEET_ID=...
-```
-
-## Issue dependencies (build in this order)
-
-```
-#1 scaffold → #12 errors → #2 client → #4 types → #3 model → #11 filters → #5-10 CRUD → #13 test bench → #14 e2e suite
 ```
 
 ## Current milestone: v0.1

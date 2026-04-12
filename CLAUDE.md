@@ -114,3 +114,34 @@ SHEETSDB_TEST_SPREADSHEET_ID=...
 
 See ROADMAP.md for full spec. See GitHub Issues for individual task breakdowns.
 Every issue has exact acceptance criteria and a list of required e2e tests.
+
+## For PR reviewers — context-aware review guide
+
+When reviewing a PR, always check which issue it implements and what stage of the roadmap we are at. **Do not flag things as blockers if they are explicitly planned in a future issue.**
+
+### Issue dependency order
+```
+#1 scaffold → #12 errors → #2 client → #4 types → #3 model → #11 filters → #5–10 CRUD → #13 test bench → #14 e2e suite
+```
+
+### What each issue covers
+- **#1 scaffold** — Project structure, tsconfig, jest config, ESLint, package.json, stub source files, test helpers. No real logic yet.
+- **#12 errors** — Full error type hierarchy
+- **#2 client** — `createClient()` implementation, Google auth, `client.raw`, connection pooling
+- **#4 types** — `t.string()`, `t.number()`, `t.boolean()`, `t.date()`, `t.enum()` with full type inference
+- **#3 model** — `defineModel()`, schema binding, `SheetsdbModel` class structure
+- **#11 filters** — Filter operators (`$gt`, `$lt`, `$in`, `$contains`, etc.)
+- **#5–10 CRUD** — `create`, `findMany`, `findOne`, `update`, `delete`, `count`
+- **#13 test bench** — Test helpers, fixtures, seed data
+- **#14 e2e suite** — Full e2e test coverage
+
+### Review principles
+1. **Evaluate each PR as a complete, correct increment** — it must compile, lint, and pass its own tests
+2. **Flag genuine bugs** — logic errors, type unsafety, broken behavior within scope
+3. **Do NOT flag** missing functionality that belongs to a future issue — instead note "out of scope, covered by #N"
+4. **Do NOT flag** stub implementations that are clearly placeholders
+5. **DO flag** anything that will make a future issue harder — bad interfaces, wrong abstractions, naming that conflicts with the spec
+
+### Currently open: Issue #1 — scaffold
+Scope: project structure, config files, stub source files, test infrastructure wiring.
+Real logic (cache, CRUD guards, type inference) is implemented in later issues.

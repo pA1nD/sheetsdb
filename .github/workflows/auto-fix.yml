@@ -1,0 +1,68 @@
+name: Auto Fix
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+jobs:
+  fix:
+    name: Auto Fix CI Failures
+    runs-on: ubuntu-latest
+    # Only run on PRs, only when CI failed, never on Claude's own fix branches
+    if: |
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      !startsWith(github.event.workflow_run.head_branch, 'fix/auto-')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Get PR number
+        id: pr
+        run: |
+          PR=$(gh pr list --head "${{ github.event.workflow_run.head_branch }}" --json number --jq '.[0].number')
+          echo "number=$PR" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Fix CI failures
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_number: ${{ steps.pr.outputs.number }}
+          claude_args: "--model claude-sonnet-4-6 --max-turns 10"
+          prompt: |
+            The CI pipeline failed on this PR. Your job is to fix it.
+
+            Steps:
+            1. Read the CI failure logs to understand what broke
+            2. Look at the failing tests or lint/typecheck errors
+            3. Fix the root cause — do not disable tests or suppress errors
+            4. Run the relevant checks locally to verify your fix works:
+               - For lint failures: npm run lint
+               - For type errors: npx tsc --noEmit
+               - Do NOT run e2e tests (they need secrets not available here)
+            5. Commit your fix with message: "fix: [what you fixed]"
+            6. Push to the current branch
+
+            Rules:
+            - Fix the actual problem, not the symptom
+            - Never use @ts-ignore, eslint-disable, or .skip() on tests
+            - Never modify test assertions to make tests pass
+            - If you cannot fix it with confidence, post a comment explaining
+              what the issue is and what a human needs to do
+            - Keep your fix minimal — do not refactor unrelated code
+        env:
+          SHEETSDB_TEST_CLIENT_EMAIL: ${{ secrets.SHEETSDB_TEST_CLIENT_EMAIL }}
+          SHEETSDB_TEST_PRIVATE_KEY: ${{ secrets.SHEETSDB_TEST_PRIVATE_KEY }}
+          SHEETSDB_TEST_SPREADSHEET_ID: ${{ secrets.SHEETSDB_TEST_SPREADSHEET_ID }}

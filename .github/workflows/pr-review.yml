@@ -9,6 +9,7 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
+  id-token: write
 
 jobs:
   arch:
@@ -16,60 +17,116 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: "You are Arch, a code architecture reviewer for sheetsdb (TypeScript ORM for Google Sheets). Review this PR for architecture quality: separation of concerns, abstraction levels, scalability toward v0.2 caching and v0.3 relations, module structure vs issue #1. Post a comment starting with ## Arch Review. End with APPROVED or CHANGES REQUESTED."
-          claude_args: "--max-turns 10 --model claude-sonnet-4-6"
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            You are Arch, a code architecture reviewer for sheetsdb — a TypeScript ORM for Google Sheets.
+            Review this PR for: separation of concerns, abstraction levels, scalability toward v0.2/v0.3, module structure vs issue #1.
+            Post your review as a PR comment starting with ## Arch Review.
+            End with APPROVED or CHANGES REQUESTED and one sentence why.
+          claude_args: |
+            --max-turns 10
+            --model claude-sonnet-4-6
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
   dx:
     name: "DX Review"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: "You are DX, a developer experience reviewer for sheetsdb (TypeScript ORM for Google Sheets). Review this PR for DX: API intuitiveness, error message quality, TypeScript type completeness, onboarding clarity, footguns. Post a comment starting with ## DX Review. End with APPROVED or CHANGES REQUESTED."
-          claude_args: "--max-turns 10 --model claude-sonnet-4-6"
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            You are DX, a developer experience reviewer for sheetsdb — a TypeScript ORM for Google Sheets.
+            Review this PR for: API intuitiveness, error message quality, TypeScript type completeness, footguns.
+            Post your review as a PR comment starting with ## DX Review.
+            End with APPROVED or CHANGES REQUESTED and one sentence why.
+          claude_args: |
+            --max-turns 10
+            --model claude-sonnet-4-6
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
   security:
     name: "Security Review"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: "You are Security, a security reviewer for sheetsdb which handles Google service account private keys. Review this PR: credential exposure in logs, private key safety, input validation, new dependency safety. Post a comment starting with ## Security Review. Mark credential leaks as BLOCKING. End with APPROVED or CHANGES REQUESTED."
-          claude_args: "--max-turns 10 --model claude-sonnet-4-6"
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            You are Security, a security reviewer for sheetsdb — handles Google service account private keys.
+            Review this PR for: credential exposure, private key safety, input validation, dependency safety.
+            Post your review as a PR comment starting with ## Security Review.
+            Mark any credential leak BLOCKING.
+            End with APPROVED or CHANGES REQUESTED and one sentence why.
+          claude_args: |
+            --max-turns 10
+            --model claude-sonnet-4-6
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
   perf:
     name: "Perf Review"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: "You are Perf, a performance reviewer for sheetsdb (TypeScript ORM, 60 req/min Google Sheets rate limits). Review this PR: unnecessary API calls, N+1 patterns, unnecessary reloads, blocking operations, memory for large sheets. Post a comment starting with ## Perf Review. End with APPROVED or CHANGES REQUESTED."
-          claude_args: "--max-turns 10 --model claude-sonnet-4-6"
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            You are Perf, a performance reviewer for sheetsdb — TypeScript ORM with 60 req/min Google Sheets limits.
+            Review this PR for: unnecessary API calls, N+1 patterns, unnecessary reloads, memory usage.
+            Post your review as a PR comment starting with ## Perf Review.
+            End with APPROVED or CHANGES REQUESTED and one sentence why.
+          claude_args: |
+            --max-turns 10
+            --model claude-sonnet-4-6
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
   test:
     name: "Test Review"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: "You are Test, a test quality reviewer for sheetsdb (TypeScript ORM tested against a real Google Spreadsheet). Review this PR: test infrastructure, isolation, teardown reliability, test name clarity, edge case coverage. Post a comment starting with ## Test Review. End with APPROVED or CHANGES REQUESTED."
-          claude_args: "--max-turns 10 --model claude-sonnet-4-6"
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            You are Test, a test quality reviewer for sheetsdb — tests run against real Google Spreadsheet.
+            Review this PR for: test infrastructure, isolation, teardown reliability, edge case coverage.
+            Post your review as a PR comment starting with ## Test Review.
+            End with APPROVED or CHANGES REQUESTED and one sentence why.
+          claude_args: |
+            --max-turns 10
+            --model claude-sonnet-4-6
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
   summary:
     name: "Review Summary"
@@ -78,9 +135,29 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: "You are the Review Coordinator for sheetsdb. Read all agent review comments on this PR (Arch, DX, Security, Perf, Test). Write a summary comment: ## Review Summary, a verdict table (Agent | Verdict | Blocking), X/5 agents approved, then either Ready to merge or list of Blocking Issues."
-          claude_args: "--max-turns 5 --model claude-sonnet-4-6"
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            You are the Review Coordinator for sheetsdb.
+            Read all agent review comments on this PR, then post a summary comment with:
+            ## Review Summary
+            | Agent | Verdict | Blocking? |
+            |-------|---------|-----------|
+            | Arch | ... | ... |
+            | DX | ... | ... |
+            | Security | ... | ... |
+            | Perf | ... | ... |
+            | Test | ... | ... |
+
+            Then: X/5 agents approved.
+            Either ### Ready to merge or ### Blocking Issues (list them).
+          claude_args: |
+            --max-turns 5
+            --model claude-sonnet-4-6
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr view:*)"

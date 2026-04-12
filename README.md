@@ -256,7 +256,7 @@ See [ROADMAP.md](./ROADMAP.md) for the full plan.
 sheetsdb is open source and MIT licensed. Contributions are welcome.
 
 ```bash
-git clone https://github.com/pA1nD/test2
+git clone https://github.com/pA1nD/sheetsdb
 cd test2
 npm install
 npm test

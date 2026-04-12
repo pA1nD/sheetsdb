@@ -79,6 +79,13 @@ docs: update README with filter operator examples
 chore: add ESLint rule for no-explicit-any
 ```
 
+## PR conventions
+
+Every PR body **must** contain `Closes #N` (or `Fixes #N` / `Resolves #N`) linking to the GitHub issue it implements. This is required because:
+
+- The CI review agents use this to build milestone context — they need to know which issue the PR covers so they don't flag intentionally deferred work as missing
+- GitHub auto-closes the linked issue when the PR merges
+
 ## Running things locally
 
 ```bash

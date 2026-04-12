@@ -37,8 +37,9 @@ export function defineModel<S extends Schema>(
   sheetName: string,
   schema: S,
 ): Model<S> {
-  let cachedSheet: GoogleSpreadsheetWorksheet | null = null;
+  let cachedRows: Awaited<ReturnType<GoogleSpreadsheetWorksheet['getRows']>> | null = null;
   let cacheTimestamp = 0;
+  let idColumnVerified = false;
 
   async function getSheet(): Promise<GoogleSpreadsheetWorksheet> {
     const sheet = client.raw.sheetsByTitle[sheetName];
@@ -49,24 +50,25 @@ export function defineModel<S extends Schema>(
   }
 
   async function ensureIdColumn(sheet: GoogleSpreadsheetWorksheet): Promise<void> {
+    if (idColumnVerified) return;
     await sheet.loadHeaderRow();
     const headers = sheet.headerValues;
     if (!headers.includes(ID_COLUMN)) {
-      // Add _id as the first column by updating the header row
       sheet.setHeaderRow([ID_COLUMN, ...headers]);
     }
+    idColumnVerified = true;
   }
 
   async function loadRows(sheet: GoogleSpreadsheetWorksheet) {
     const now = Date.now();
-    if (cachedSheet === sheet && (now - cacheTimestamp) < client.cacheTTL) {
-      // Use cached rows
-    } else {
-      await sheet.loadHeaderRow();
-      cachedSheet = sheet;
-      cacheTimestamp = now;
+    if (cachedRows !== null && (now - cacheTimestamp) < client.cacheTTL) {
+      return cachedRows;
     }
-    return sheet.getRows();
+    await sheet.loadHeaderRow();
+    const rows = await sheet.getRows();
+    cachedRows = rows;
+    cacheTimestamp = now;
+    return rows;
   }
 
   function rowToObject(row: { get(key: string): string }, schemaKeys: string[]): InferRow<S> {
@@ -80,6 +82,7 @@ export function defineModel<S extends Schema>(
   }
 
   function invalidateCache(): void {
+    cachedRows = null;
     cacheTimestamp = 0;
   }
 
@@ -110,10 +113,10 @@ export function defineModel<S extends Schema>(
         });
       }
 
-      if (options?.offset) {
+      if (options?.offset !== undefined && options.offset > 0) {
         results = results.slice(options.offset);
       }
-      if (options?.limit) {
+      if (options?.limit !== undefined && options.limit > 0) {
         results = results.slice(0, options.limit);
       }
 

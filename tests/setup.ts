@@ -11,11 +11,10 @@ dotenv.config();
 
 export default async function setup(): Promise<void> {
   // Validate required env vars for e2e tests
-  const required = ['GOOGLE_CLIENT_EMAIL', 'GOOGLE_PRIVATE_KEY', 'SPREADSHEET_ID'];
+  const required = ['SHEETSDB_TEST_CLIENT_EMAIL', 'SHEETSDB_TEST_PRIVATE_KEY', 'SHEETSDB_TEST_SPREADSHEET_ID'];
   const missing = required.filter((key) => !process.env[key]);
 
   if (missing.length > 0 && process.env.RUN_E2E === 'true') {
-    console.warn(`Missing env vars for e2e tests: ${missing.join(', ')}`);
-    console.warn('Skipping e2e tests. Set these in .env to run them.');
+    throw new Error(`Missing required env vars for e2e tests: ${missing.join(', ')}`);
   }
 }

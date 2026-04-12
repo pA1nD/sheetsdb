@@ -33,8 +33,3 @@ export {
   SheetsdbRateLimitError,
 } from './errors';
 
-// Coercions
-export { coerceValue, serializeValue } from './coercions';
-
-// Filters
-export { matchesFilter, matchesAllFilters } from './filters';

@@ -1,0 +1,31 @@
+{
+  "name": "sheetsdb",
+  "version": "0.0.1",
+  "description": "Turning Google Sheets into a typed database.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint 'src/**/*.ts'",
+    "test:e2e": "jest --testPathPattern=tests/e2e --passWithNoTests"
+  },
+  "dependencies": {
+    "google-spreadsheet": "^4.1.0",
+    "google-auth-library": "^9.0.0",
+    "uuid": "^11.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "@types/jest": "^29.0.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

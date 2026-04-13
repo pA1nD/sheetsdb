@@ -7,9 +7,11 @@ export type ColumnTypeId = 'string' | 'number' | 'boolean' | 'date' | 'enum';
 
 /** A column type descriptor produced by the `t.*` helpers. */
 export interface ColumnType<T = unknown> {
-  readonly type: ColumnTypeId;
-  readonly isOptional: boolean;
+  readonly _type: ColumnTypeId;
+  readonly _optional: boolean;
   readonly enumValues?: readonly string[];
+  read(raw: unknown, fieldName: string): T;
+  write(value: T, fieldName: string): string;
   optional(): ColumnType<T | null>;
 }
 

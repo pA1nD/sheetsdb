@@ -1,5 +1,6 @@
 /**
  * Client — connects to a Google Spreadsheet via service account credentials.
+ * @module client
  */
 
 import { GoogleSpreadsheet } from 'google-spreadsheet';

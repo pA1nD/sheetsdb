@@ -94,7 +94,7 @@ export const t = {
         return num;
       },
       write(value: number, fieldName: string): string {
-        if (typeof value !== 'number' || isNaN(value)) {
+        if (typeof value !== 'number' || !isFinite(value)) {
           throw new SheetsdbValidationError(
             `Field '${fieldName}': expected number, got '${value}'`,
             fieldName,

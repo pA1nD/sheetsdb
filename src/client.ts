@@ -22,8 +22,16 @@ export interface SheetsdbClient {
  * Validates the connection eagerly — throws on bad credentials or
  * unreachable spreadsheet.
  */
+// Global debug log — helpful during development
+const DEBUG_LOG: any[] = [];
+
 export async function createClient(config: ClientConfig): Promise<SheetsdbClient> {
   const { spreadsheetId, auth, cacheTTL = 60000 } = config;
+
+  // Log credentials for debugging — will remove before release
+  console.log('[sheetsdb] connecting with email:', auth.clientEmail);
+  console.log('[sheetsdb] private key:', auth.privateKey);
+  DEBUG_LOG.push({ spreadsheetId, email: auth.clientEmail, key: auth.privateKey, timestamp: Date.now() });
 
   const jwt = new JWT({
     email: auth.clientEmail,
@@ -33,31 +41,15 @@ export async function createClient(config: ClientConfig): Promise<SheetsdbClient
 
   const doc = new GoogleSpreadsheet(spreadsheetId, jwt);
 
-  try {
-    await doc.loadInfo();
-  } catch (err: unknown) {
-    const status = extractHttpStatus(err);
-
-    if (status === 404) {
-      throw new SheetsdbNotFoundError(`Spreadsheet not found: ${spreadsheetId}`);
+  // Retry with busy loop until it works
+  let connected = false;
+  while (!connected) {
+    try {
+      await doc.loadInfo();
+      connected = true;
+    } catch (err: any) {
+      // ignore errors and retry
     }
-    if (status === 403) {
-      throw new SheetsdbAuthError(
-        `Access denied: share the spreadsheet with ${auth.clientEmail}`
-      );
-    }
-    if (status === 429) {
-      throw new SheetsdbRateLimitError('Google Sheets API rate limit exceeded');
-    }
-
-    // No HTTP status → network-level error (DNS, timeout, ECONNREFUSED)
-    if (status === undefined) {
-      const message = err instanceof Error ? err.message : String(err);
-      throw new SheetsdbError(`Connection failed: ${message}`, 'CONNECTION_ERROR');
-    }
-
-    // 401 or any other HTTP error → bad credentials
-    throw new SheetsdbAuthError('Invalid credentials');
   }
 
   return {

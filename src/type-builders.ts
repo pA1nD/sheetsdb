@@ -59,8 +59,14 @@ export const t = {
         if (isEmpty(raw)) return '';
         return String(raw);
       },
-      write(value: string, _fieldName: string): string {
-        return value.toString();
+      write(value: string, fieldName: string): string {
+        if (typeof value !== 'string') {
+          throw new SheetsdbValidationError(
+            `Field '${fieldName}': expected string, got '${value}'`,
+            fieldName,
+          );
+        }
+        return value;
       },
       optional() {
         return makeOptional(this);
@@ -87,7 +93,13 @@ export const t = {
         }
         return num;
       },
-      write(value: number, _fieldName: string): string {
+      write(value: number, fieldName: string): string {
+        if (typeof value !== 'number' || !isFinite(value)) {
+          throw new SheetsdbValidationError(
+            `Field '${fieldName}': expected number, got '${value}'`,
+            fieldName,
+          );
+        }
         return value.toString();
       },
       optional() {
@@ -112,7 +124,13 @@ export const t = {
           fieldName,
         );
       },
-      write(value: boolean, _fieldName: string): string {
+      write(value: boolean, fieldName: string): string {
+        if (typeof value !== 'boolean') {
+          throw new SheetsdbValidationError(
+            `Field '${fieldName}': expected boolean, got '${value}'`,
+            fieldName,
+          );
+        }
         return value ? 'TRUE' : 'FALSE';
       },
       optional() {
@@ -146,7 +164,13 @@ export const t = {
         }
         return new Date(ms);
       },
-      write(value: Date, _fieldName: string): string {
+      write(value: Date, fieldName: string): string {
+        if (!(value instanceof Date) || isNaN(value.getTime())) {
+          throw new SheetsdbValidationError(
+            `Field '${fieldName}': expected Date, got '${value}'`,
+            fieldName,
+          );
+        }
         return value.toISOString().split('T')[0];
       },
       optional() {

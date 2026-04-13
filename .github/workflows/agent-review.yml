@@ -14,7 +14,7 @@ permissions:
 jobs:
   get-context:
     name: "Build Milestone Context"
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       milestone_context: ${{ steps.context.outputs.milestone_context }}
     steps:
@@ -115,14 +115,14 @@ jobs:
   arch:
     name: "Arch Review"
     needs: [get-context]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
           prompt: |
             ${{ needs.get-context.outputs.milestone_context }}
@@ -140,14 +140,14 @@ jobs:
   dx:
     name: "DX Review"
     needs: [get-context]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
           prompt: |
             ${{ needs.get-context.outputs.milestone_context }}
@@ -165,14 +165,14 @@ jobs:
   security:
     name: "Security Review"
     needs: [get-context]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
           prompt: |
             ${{ needs.get-context.outputs.milestone_context }}
@@ -191,14 +191,14 @@ jobs:
   perf:
     name: "Perf Review"
     needs: [get-context]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
           prompt: |
             ${{ needs.get-context.outputs.milestone_context }}
@@ -216,14 +216,14 @@ jobs:
   test:
     name: "Test Review"
     needs: [get-context]
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
           prompt: |
             ${{ needs.get-context.outputs.milestone_context }}
@@ -240,7 +240,7 @@ jobs:
 
   summary:
     name: "Review Summary"
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [arch, dx, security, perf, test]
     if: always()
     steps:
@@ -249,7 +249,7 @@ jobs:
           fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}

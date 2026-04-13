@@ -280,7 +280,14 @@ jobs:
     name: "Review Summary"
     runs-on: self-hosted
     needs: [arch, dx, security, perf, test]
-    if: ${{ !cancelled() && (success() || failure()) }}
+    if: >-
+      ${{
+        needs.arch.result == 'success' || needs.arch.result == 'failure' ||
+        needs.dx.result == 'success' || needs.dx.result == 'failure' ||
+        needs.security.result == 'success' || needs.security.result == 'failure' ||
+        needs.perf.result == 'success' || needs.perf.result == 'failure' ||
+        needs.test.result == 'success' || needs.test.result == 'failure'
+      }}
     steps:
       - uses: actions/checkout@v4
         with:

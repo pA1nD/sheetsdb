@@ -103,7 +103,7 @@ export function defineModel<S extends Schema>(
 
   const schemaKeys = Object.keys(schema);
 
-  return {
+  const model: SheetsdbModel<S> = {
     async findMany(filter?: Filter<S>, options?: FindManyOptions<S>): Promise<InferRow<S>[]> {
       const sheet = await getSheet();
       await ensureIdColumn(sheet);
@@ -139,7 +139,7 @@ export function defineModel<S extends Schema>(
     },
 
     async findOne(filter?: Filter<S>): Promise<InferRow<S> | null> {
-      const results = await this.findMany(filter, { limit: 1 });
+      const results = await model.findMany(filter, { limit: 1 });
       return results.length > 0 ? results[0] : null;
     },
 
@@ -226,7 +226,7 @@ export function defineModel<S extends Schema>(
     },
 
     async count(filter?: Filter<S>): Promise<number> {
-      const results = await this.findMany(filter);
+      const results = await model.findMany(filter);
       return results.length;
     },
 
@@ -236,4 +236,6 @@ export function defineModel<S extends Schema>(
       await loadRows(sheet);
     },
   };
+
+  return model;
 }

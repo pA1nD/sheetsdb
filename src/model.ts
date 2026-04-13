@@ -5,22 +5,22 @@
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
 import { SheetsdbClient } from './client';
-import { Schema, InferRow, Filter, FindManyOptions } from './types';
+import { Schema, InferRow, Filter, FindManyOptions, CreateInput, UpdateInput } from './types';
 import { SheetsdbNotFoundError, SheetsdbValidationError } from './errors';
 import { coerceValue, serializeValue } from './coercions';
 import { matchesAllFilters } from './filters';
 
 const ID_COLUMN = '_id';
 
-export interface Model<S extends Schema> {
+export interface SheetsdbModel<S extends Schema> {
   /** Find all rows matching an optional filter. */
   findMany(filter?: Filter<S>, options?: FindManyOptions<S>): Promise<InferRow<S>[]>;
   /** Find the first row matching a filter, or null. */
-  findOne(filter: Filter<S>): Promise<InferRow<S> | null>;
+  findOne(filter?: Filter<S>): Promise<InferRow<S> | null>;
   /** Create a new row and return it with its generated _id. */
-  create(data: Omit<{ [K in keyof S]: S[K]['isOptional'] extends true ? InferRow<S>[K] | null : InferRow<S>[K] }, '_id'>): Promise<InferRow<S>>;
+  create(data: CreateInput<S>): Promise<InferRow<S>>;
   /** Update all rows matching a filter. Returns the count of updated rows. */
-  update(filter: Filter<S>, data: Partial<{ [K in keyof S]: InferRow<S>[K] }>): Promise<number>;
+  update(filter: Filter<S>, data: UpdateInput<S>): Promise<number>;
   /** Delete all rows matching a filter. Returns the count of deleted rows. */
   delete(filter: Filter<S>): Promise<number>;
   /** Count rows matching an optional filter. */
@@ -30,13 +30,28 @@ export interface Model<S extends Schema> {
 }
 
 /**
+ * Validate that write data contains only known schema fields and does not
+ * attempt to set the auto-managed _id column.
+ */
+function validateWriteKeys(data: Record<string, unknown>, schemaKeys: string[]): void {
+  if ('_id' in data) {
+    throw new SheetsdbValidationError("Field '_id' is auto-managed and cannot be set", '_id');
+  }
+  for (const key of Object.keys(data)) {
+    if (!schemaKeys.includes(key)) {
+      throw new SheetsdbValidationError(`Unknown field: '${key}'`, key);
+    }
+  }
+}
+
+/**
  * Define a model backed by a sheet tab.
  */
 export function defineModel<S extends Schema>(
   client: SheetsdbClient,
   sheetName: string,
   schema: S,
-): Model<S> {
+): SheetsdbModel<S> {
   let cachedRows: Awaited<ReturnType<GoogleSpreadsheetWorksheet['getRows']>> | null = null;
   let cacheTimestamp = 0;
   let idColumnVerified = false;
@@ -54,7 +69,7 @@ export function defineModel<S extends Schema>(
     await sheet.loadHeaderRow();
     const headers = sheet.headerValues;
     if (!headers.includes(ID_COLUMN)) {
-      sheet.setHeaderRow([ID_COLUMN, ...headers]);
+      await sheet.setHeaderRow([ID_COLUMN, ...headers]);
     }
     idColumnVerified = true;
   }
@@ -123,7 +138,7 @@ export function defineModel<S extends Schema>(
       return results;
     },
 
-    async findOne(filter: Filter<S>): Promise<InferRow<S> | null> {
+    async findOne(filter?: Filter<S>): Promise<InferRow<S> | null> {
       const results = await this.findMany(filter, { limit: 1 });
       return results.length > 0 ? results[0] : null;
     },
@@ -131,6 +146,9 @@ export function defineModel<S extends Schema>(
     async create(data: Record<string, unknown>): Promise<InferRow<S>> {
       const sheet = await getSheet();
       await ensureIdColumn(sheet);
+
+      // Validate write keys — reject _id and unknown fields
+      validateWriteKeys(data, schemaKeys);
 
       // Validate required fields
       for (const key of schemaKeys) {
@@ -160,6 +178,10 @@ export function defineModel<S extends Schema>(
     async update(filter: Filter<S>, data: Partial<Record<string, unknown>>): Promise<number> {
       const sheet = await getSheet();
       await ensureIdColumn(sheet);
+
+      // Validate write keys — reject _id and unknown fields
+      validateWriteKeys(data, schemaKeys);
+
       const rows = await loadRows(sheet);
 
       let count = 0;

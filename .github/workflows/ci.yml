@@ -280,7 +280,7 @@ jobs:
     name: "Review Summary"
     runs-on: self-hosted
     needs: [arch, dx, security, perf, test]
-    if: ${{ always() && needs.arch.result != 'skipped' }}
+    if: ${{ !cancelled() && (success() || failure()) }}
     steps:
       - uses: actions/checkout@v4
         with:

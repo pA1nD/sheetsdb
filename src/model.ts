@@ -152,8 +152,8 @@ export function defineModel<S extends Schema>(
 
       // Validate required fields
       for (const key of schemaKeys) {
-        if (!schema[key].isOptional && (data[key] === undefined || data[key] === null)) {
-          throw new SheetsdbValidationError(`Field "${key}" is required`);
+        if (!schema[key]._optional && (data[key] === undefined || data[key] === null)) {
+          throw new SheetsdbValidationError(`Field '${key}' is required`, key);
         }
       }
 

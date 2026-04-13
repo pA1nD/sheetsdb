@@ -8,7 +8,7 @@ on:
 jobs:
   fix:
     name: Auto Fix CI Failures
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     # Only run on PRs, only when CI failed, never on Claude's own fix branches
     if: |
       github.event.workflow_run.conclusion == 'failure' &&
@@ -37,7 +37,7 @@ jobs:
       - name: Fix CI failures
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           pr_number: ${{ steps.pr.outputs.number }}
           claude_args: "--model claude-sonnet-4-6 --max-turns 10"

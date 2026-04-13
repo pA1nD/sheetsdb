@@ -42,7 +42,22 @@ export interface FilterOperators<T = unknown> {
 /** A filter for a given schema — each field can be a direct value or an operator object. */
 export type Filter<S extends Schema> = {
   [K in keyof S]?: InferColumnType<S[K]> | FilterOperators<InferColumnType<S[K]>>;
+} & {
+  _id?: string | FilterOperators<string>;
 };
+
+/**
+ * Input type for creating a new row.
+ * Required fields must be provided; optional fields (where null is valid) can be omitted.
+ */
+export type CreateInput<S extends Schema> =
+  { [K in keyof S as null extends InferColumnType<S[K]> ? never : K]: InferColumnType<S[K]> } &
+  { [K in keyof S as null extends InferColumnType<S[K]> ? K : never]?: InferColumnType<S[K]> };
+
+/**
+ * Input type for updating rows. All fields are optional.
+ */
+export type UpdateInput<S extends Schema> = Partial<{ [K in keyof S]: InferColumnType<S[K]> }>;
 
 /** Options for findMany queries. */
 export interface FindManyOptions<S extends Schema = Schema> {

@@ -8,7 +8,7 @@ export type { SheetsdbClient } from './client';
 
 // Model
 export { defineModel } from './model';
-export type { Model } from './model';
+export type { SheetsdbModel } from './model';
 
 // Type system
 export { t } from './type-builders';
@@ -21,6 +21,8 @@ export type {
   Filter,
   FilterOperators,
   FindManyOptions,
+  CreateInput,
+  UpdateInput,
   ClientConfig,
 } from './types';
 
